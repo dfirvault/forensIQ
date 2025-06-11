@@ -32,7 +32,7 @@ ForensIQ supports multiple Ollama models with different capabilities:
 1. Ensure you have Python 3.8+ installed
 2. Install required packages:
    ```bash
-   pip install requests yaspin
+   pip install requests yaspin psutil
 3. Install required packages:
 
 ## Configuration
