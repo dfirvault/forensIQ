@@ -1,6 +1,6 @@
 ![1513a619-6193-4a40-ae8d-f9019696df76 (1)](https://github.com/user-attachments/assets/182c042e-6379-49f1-b037-b3f10e545cca)
 
-# ForensIQ: Elasticsearch Log Analysis with AI
+# ForensIQ: Elasticsearch and CSV Log Analysis with Ollama LLM AI
 
 ForensIQ is an advanced log analysis tool that combines Elasticsearch with Ollama's AI capabilities to provide progressive summarization and entity tracking for forensic investigations.
 
