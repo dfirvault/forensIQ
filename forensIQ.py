@@ -17,11 +17,13 @@ import time
 from collections import defaultdict
 import re
 import psutil
+import csv
+from tkinter import Tk, filedialog
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 print("")
-print("Developed by Jacob Wilson - Version 0.1")
+print("Developed by Jacob Wilson - Version 0.2")
 print("dfirvault@gmail.com")
 print("")
 
@@ -68,16 +70,16 @@ MODEL_RAM_REQUIREMENTS_GB = {
 # Required configuration keys and their validation functions
 REQUIRED_CONFIG = {
     'ELASTICSEARCH_URL': {
-        'validate': lambda x: x.startswith(('http://', 'https://')),
-        'error_msg': "must start with http:// or https://"
+        'validate': lambda x: x.startswith(('http://', 'https://')) or x.lower() == 'none',
+        'error_msg': "must start with http:// or https:// or be 'none'"
     },
     'ELASTIC_USERNAME': {
-        'validate': lambda x: len(x) > 0,
-        'error_msg': "cannot be empty"
+        'validate': lambda x: len(x) > 0 or x.lower() == 'none',
+        'error_msg': "cannot be empty or must be 'none'"
     },
     'ELASTIC_PASSWORD': {
-        'validate': lambda x: len(x) > 0,
-        'error_msg': "cannot be empty"
+        'validate': lambda x: len(x) > 0 or x.lower() == 'none',
+        'error_msg': "cannot be empty or must be 'none'"
     },
     'OLLAMA_URL': {
         'validate': lambda x: x.startswith(('http://', 'https://')),
@@ -111,7 +113,7 @@ def validate_config(config):
                 print(f"\n⚠️ Missing required configuration: {key}")
             
             # Special handling for OLLAMA_MODEL
-            if 'OLLAMA_MODEL' in config:
+            if key == 'OLLAMA_MODEL' and 'OLLAMA_MODEL' in config:
                 print(f"\nYou have chosen '{config['OLLAMA_MODEL']}' as the model to use.")
                 ram_gb = get_available_ram_gb()
                 print(f"Detected Available RAM: {ram_gb} GB")
@@ -138,8 +140,9 @@ def validate_config(config):
                             print("Invalid choice, keeping current model.")
                     except ValueError:
                         print("Invalid input, keeping current model.")
-            else:
-                value = input(f"Enter value for {key}: ").strip()
+                continue
+            
+            value = input(f"Enter value for {key}: ").strip()
             
             # Validate the new value
             if validation['validate'](value):
@@ -351,6 +354,9 @@ class AnalysisContext:
         return self.progressive_summary[:max_length] + "... [truncated]"
 
 def get_available_indices():
+    if ELASTICSEARCH_URL.lower() == 'none':
+        return None
+        
     retries = 0
     while retries < MAX_RETRIES:
         try:
@@ -638,6 +644,73 @@ def get_logs_from_index(index, hours=DEFAULT_TIME_WINDOW):
         print(f"\n⛔ Error retrieving logs: {type(e).__name__}: {e}")
         return None, None
 
+def select_csv_file():
+    """Open a file dialog to select a CSV file"""
+    root = Tk()
+    root.withdraw()  # Hide the main window
+    file_path = filedialog.askopenfilename(
+        title="Select CSV File",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+    return file_path
+
+def read_csv_file(file_path):
+    """Read a CSV file and return the data as a list of dictionaries"""
+    logs = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as csvfile:
+            # Try to detect the dialect
+            try:
+                dialect = csv.Sniffer().sniff(csvfile.read(1024))
+                csvfile.seek(0)
+            except:
+                dialect = csv.excel  # fallback to excel dialect
+            
+            reader = csv.DictReader(csvfile, dialect=dialect)
+            for row in reader:
+                # Convert empty strings to None
+                cleaned_row = {k: v if v != '' else None for k, v in row.items()}
+                logs.append(cleaned_row)
+        
+        print(f"✅ Successfully read {len(logs)} records from {file_path}")
+        return logs
+    except Exception as e:
+        print(f"⛔ Failed to read CSV file: {e}")
+        return None
+
+def detect_csv_timestamp_field(logs):
+    """Attempt to detect a timestamp field in CSV data"""
+    if not logs:
+        return None
+    
+    # Common timestamp field names
+    timestamp_candidates = [
+        '@timestamp', 'timestamp', 'time', 'event_time',
+        'created_at', 'log_time', 'date_time', 'datetime'
+    ]
+    
+    # Check first log for candidate fields
+    first_log = logs[0]
+    for field in timestamp_candidates:
+        if field in first_log:
+            return field
+    
+    # Fallback to any field that looks like a timestamp
+    for field in first_log.keys():
+        value = first_log[field]
+        if isinstance(value, str):
+            # Check for ISO 8601 format
+            if re.match(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}', value):
+                return field
+            # Check for epoch time
+            try:
+                if float(value) > 1000000000:  # Likely epoch time
+                    return field
+            except ValueError:
+                pass
+    
+    return None
+
 def chunk_logs(logs, chunk_size=LOG_CHUNK_SIZE):
     """Yield successive chunks of logs."""
     for i in range(0, len(logs), chunk_size):
@@ -856,6 +929,28 @@ def save_html_report(analysis_history, index_name=None):
             {f'<div class="index-info">Analyzed Index: {index_name}</div>' if index_name else ''}
         """
         
+        # Add each analysis response to the report
+        for i, response in enumerate(analysis_history):
+            if i == 0:
+                html_content += f"""
+                <div class="response">
+                    <h2>Final Analysis Report</h2>
+                    <pre>{response}</pre>
+                </div>
+                """
+            else:
+                html_content += f"""
+                <div class="response">
+                    <h2>Follow-up Response #{i}</h2>
+                    <pre>{response}</pre>
+                </div>
+                """
+        
+        html_content += """
+            </body>
+            </html>
+            """
+        
         # Ask for save location
         file_path = filedialog.asksaveasfilename(
             defaultextension=".html",
@@ -869,7 +964,7 @@ def save_html_report(analysis_history, index_name=None):
             print(f"\n✅ Report saved successfully to: {os.path.abspath(file_path)}")
         else:
             print("\n⚠️ Report saving cancelled.")
-            
+                
     except ImportError:
         print("\n⚠️ Tkinter not available. Please specify a filename to save the report:")
         file_path = input("Enter file path (e.g., report.html): ").strip()
@@ -1310,47 +1405,82 @@ Please answer the question using this full context, highlighting any relevant:
 
 def main():
     print("\n" + "="*50)
-    print("Enhanced Elasticsearch Log Analyzer with Progressive Analysis")
+    print("Enhanced Log Analyzer with Progressive Analysis")
     print("="*50)
 
-    try:
-        health = requests.get(
-            f"{ELASTICSEARCH_URL}/_cluster/health",
-            auth=HTTPBasicAuth(ELASTIC_USERNAME, ELASTIC_PASSWORD),
-            verify=False,
-            timeout=5
-        )
-        if health.status_code != 200:
-            print("⛔ Failed to connect to Elasticsearch")
-            return
-    except Exception as e:
-        print(f"⛔ Connection failed: {e}")
-        return
+    # Check if Elasticsearch is configured
+    elastic_enabled = ELASTICSEARCH_URL.lower() != 'none' and ELASTIC_USERNAME.lower() != 'none' and ELASTIC_PASSWORD.lower() != 'none'
+    
+    if elastic_enabled:
+        try:
+            health = requests.get(
+                f"{ELASTICSEARCH_URL}/_cluster/health",
+                auth=HTTPBasicAuth(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+                verify=False,
+                timeout=5
+            )
+            if health.status_code != 200:
+                print("⛔ Failed to connect to Elasticsearch")
+                elastic_enabled = False
+        except Exception as e:
+            print(f"⛔ Elasticsearch connection failed: {e}")
+            elastic_enabled = False
 
     while True:
-        indices = get_available_indices()
-        if not indices:
-            print("No indices found or connection failed")
+        print("\nSelect data source:")
+        print("1. Elasticsearch (requires configuration)")
+        print("2. Local CSV file")
+        print("0. Exit")
+        
+        choice = input("\nEnter your choice: ").strip()
+        
+        if choice == '0':
             break
+        elif choice == '1' and elastic_enabled:
+            # Elasticsearch path
+            indices = get_available_indices()
+            if not indices:
+                print("No indices found or connection failed")
+                continue
 
-        selected_index, mapping_index = display_index_menu(indices)
+            selected_index, mapping_index = display_index_menu(indices)
 
-        if mapping_index:
-            mapping = get_index_mapping(mapping_index)
-            if mapping:
-                print(f"\nMapping for {mapping_index}:")
-                print(json.dumps(mapping, indent=2)[:2000] + "...")
-            continue
+            if mapping_index:
+                mapping = get_index_mapping(mapping_index)
+                if mapping:
+                    print(f"\nMapping for {mapping_index}:")
+                    print(json.dumps(mapping, indent=2)[:2000] + "...")
+                continue
 
-        if not selected_index:
-            break
+            if not selected_index:
+                continue
 
-        print(f"\nAnalyzing index: {selected_index}")
-        logs, timestamp_field = get_logs_from_index(selected_index, hours=None)
-        if not logs:
-            continue
+            print(f"\nAnalyzing index: {selected_index}")
+            logs, timestamp_field = get_logs_from_index(selected_index, hours=None)
+            if not logs:
+                continue
 
-        analyze_with_ollama_chunked(logs, timestamp_field, selected_index)
+            analyze_with_ollama_chunked(logs, timestamp_field, selected_index)
+            
+        elif choice == '2':
+            # CSV file path
+            csv_path = select_csv_file()
+            if not csv_path:
+                print("No file selected")
+                continue
+                
+            logs = read_csv_file(csv_path)
+            if not logs:
+                continue
+                
+            timestamp_field = detect_csv_timestamp_field(logs)
+            print(f"\nℹ️ CSV analysis:")
+            print(f"- Detected timestamp field: {timestamp_field or 'Not found'}")
+            
+            analyze_with_ollama_chunked(logs, timestamp_field, os.path.basename(csv_path))
+            
+        else:
+            print("Invalid choice. Please try again.")
 
 if __name__ == "__main__":
     main()
