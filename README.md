@@ -33,9 +33,9 @@ ForensIQ supports multiple Ollama models with different capabilities:
 2. Install required packages:
    ```bash
    pip install requests yaspin
-3. Install and configure Ollama with your preferred model(s)
+3. Install required packages:
 
-Configuration
+## Configuration
 On first run, ForensIQ will create a configuration file (ollama-config.txt) with:
 
 Elasticsearch URL and credentials
@@ -46,37 +46,28 @@ Analysis parameters
 
 The tool will automatically validate your system's RAM and suggest appropriate models.
 
-Usage
-bash
-python forensiq.py
-Select an Elasticsearch index to analyze
+##  Usage
+   ```bash
+   python forensiq.py
+```
+1. Select an Elasticsearch index to analyze
+2. Choose between default or custom analysis prompts
+3. Review the progressive analysis as it processes logs
+4. Ask follow-up questions with full context awareness
+5. Export complete reports as HTML
 
-Choose between default or custom analysis prompts
-
-Review the progressive analysis as it processes logs
-
-Ask follow-up questions with full context awareness
-
-Export complete reports as HTML
-
-Analysis Capabilities
+## Analysis Capabilities
 ForensIQ performs comprehensive log analysis including:
 
-Suspicious event categorization
+- Suspicious event categorization
+- Significance explanation
+- Attacker objective identification
+- Investigation step recommendations
+- Defensive strategies
+- Timeline reconstruction
+- IOC extraction
 
-Significance explanation
-
-Attacker objective identification
-
-Investigation step recommendations
-
-Defensive strategies
-
-Timeline reconstruction
-
-IOC extraction
-
-Output Format
+## Output Format
 Each analysis includes structured data extraction in JSON format:
 
 json
@@ -95,7 +86,7 @@ json
     "T1110 - Brute Force": ["10 failed login attempts"]
   }
 }
-Requirements
+## Requirements
 Elasticsearch cluster (7.x+)
 
 Ollama server with at least one LLM model
@@ -104,5 +95,5 @@ Minimum 2GB RAM (4GB+ recommended)
 
 Python 3.8+
 
-License
+## License
 ForensIQ is released under the MIT License.
