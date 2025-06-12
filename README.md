@@ -88,6 +88,71 @@ json
     "T1110 - Brute Force": ["10 failed login attempts"]
   }
 }
+
+![image](https://github.com/user-attachments/assets/801060cd-4e09-431c-b6e9-e4a496751e74)
+![image](https://github.com/user-attachments/assets/83c52992-1c7b-4ae6-be76-0a5da608d015)
+   Final Analysis Report
+   ```
+   1. Executive Summary:
+An unauthorized attacker has gained access to the network and compromised several systems, including IEWIN7 and LAPTOP-JU4M3I0E. The attacker established persistence by creating a local account (support) with administrative privileges on LAPTOP-JU4M3I0E and potentially exfiltrating sensitive data using the WMIGhost script.
+
+2. Detailed Timeline of Events:
+- 2023-01-01T05:54.9Z: Creation of local account support on LAPTOP-JU4M3I0E with administrative privileges
+- 2023-01-01T05:55.0Z: Addition of new account to admin group on LAPTOP-JU4M3I0E
+- 2023-01-01T05:55.1Z: Modification of WMI filters on IEWIN7
+
+3. Identified Attack Patterns Mapped to MITRE ATT&CK:
+- T1078 - Lateral Movement: Creation and modification of local accounts, addition to admin group
+- T1575 - Tool Use (WMIGhost): Potential data exfiltration
+
+4. Recommended Investigation Steps:
+- Analyze the WMIGhost script for any indicators of compromise (IOCs) such as command-and-control (C2) servers or malicious payloads.
+- Investigate the account creation event to determine if it was a result of an attack or a legitimate administrative action.
+- Examine the local administrator group on LAPTOP-JU4M3I0E for any unusual additions or modifications.
+- Monitor network traffic for outbound connections to suspicious IP addresses or domains associated with the WMIGhost script.
+
+5. Mitigation Strategies:
+- Implement strong password policies and enforce multi-factor authentication for administrative accounts.
+- Regularly review and monitor local administrator groups for any unauthorized additions or modifications.
+- Restrict the use of scripts like WMIGhost where possible, and implement strict access controls to limit their execution.
+- Implement an endpoint detection and response (EDR) solution to detect and respond to such activities in real-time.
+
+6. List of all Critical IOCs:
+- IPs: None identified
+- Users: PC04\\IEUser, NT AUTHORITY\\SYSTEM
+- URLs: http://kumardeep.sosblogs.com/The-first-blog-b1/RSS-b1-rss2-posts.htm, http://blogs.rediff.com/anilchopra/feed/, http://www.blogster.com/kapoorsunil09/profile/rss
+
+7. Any Remaining Questions or Areas Needing Clarification:
+- The purpose of the account creation event on LAPTOP-JU4M3I0E and whether it was a result of an attack or a legitimate administrative action.
+- The origin and intent behind the WMIGhost script execution on IEWIN7.
+```
+Follow-up Response #1
+```
+ Based on the provided logs and analysis summary, here are some key points to address your question:
+
+1. Previously identified entities or patterns: The IP address `10.0.2.16` and user account `S-1-5-20` have been associated with a lateral movement attack using Remote Desktop Protocol (RDP).
+
+2. Timeline events related to the question: The suspicious activity started at approximately 23:23, as indicated in the event logs. Multiple connections from IP address `10.0.2.16` to system `MSEDGEWIN10` were observed over a short period of time.
+
+3. Attack techniques that may be relevant: The attacker appears to be using RDP for lateral movement, attempting to establish persistent access or perform reconnaissance on the targeted system.
+
+4. Any new insights from connecting the question to existing data: If further investigation reveals that the user account `S-1-5-20` has elevated privileges, it could indicate that the attacker gained unauthorized access to sensitive systems or data. Additionally, if any unusual activity is found on other systems accessed from IP address `10.0.2.16`, it may suggest a broader campaign by the attacker.
+
+In light of these findings, it would be advisable to:
+- Investigate the user account `S-1-5-20` and its privileges.
+- Examine other systems that have been accessed from IP address `10.0.2.16`.
+- Check for any unusual activity on the system `MSEDGEWIN10`, such as file modifications, process executions, or network connections.
+- Investigate the origin of IP address `10.0.2.16` and its associated subnet to determine if it is part of a larger campaign.
+
+Defensive recommendations:
+- Implement strong password policies and enforce multi-factor authentication for RDP sessions.
+- Regularly update and patch all systems, especially those exposed to the internet.
+- Disable RDP if it is not necessary for business operations.
+- Use a VPN or bastion host for remote access to internal networks.
+- Monitor network traffic for unusual patterns of RDP usage.
+- Implement an intrusion detection system (IDS) or intrusion prevention system (IPS) to detect and prevent such attacks.
+```
+
 ## Requirements
 Elasticsearch cluster (7.x+)
 
