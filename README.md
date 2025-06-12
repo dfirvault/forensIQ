@@ -70,28 +70,11 @@ ForensIQ performs comprehensive log analysis including:
 - IOC extraction
 
 ## Output Format
-Each analysis includes structured data extraction in JSON format:
-
-json
-{
-  "entities": {
-    "ip": ["1.2.3.4"],
-    "user": ["admin"]
-  },
-  "themes": {
-    "brute_force": ["multiple failed logins"]
-  },
-  "timeline": [
-    {"timestamp": "2023-01-01T00:00:00Z", "event": "First failed login"}
-  ],
-  "attacks": {
-    "T1110 - Brute Force": ["10 failed login attempts"]
-  }
-}
 
 ![image](https://github.com/user-attachments/assets/801060cd-4e09-431c-b6e9-e4a496751e74)
 ![image](https://github.com/user-attachments/assets/83c52992-1c7b-4ae6-be76-0a5da608d015)
-   Final Analysis Report
+   
+### Final Analysis Report
    ```
    1. Executive Summary:
 An unauthorized attacker has gained access to the network and compromised several systems, including IEWIN7 and LAPTOP-JU4M3I0E. The attacker established persistence by creating a local account (support) with administrative privileges on LAPTOP-JU4M3I0E and potentially exfiltrating sensitive data using the WMIGhost script.
