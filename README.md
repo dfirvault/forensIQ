@@ -109,7 +109,7 @@ An unauthorized attacker has gained access to the network and compromised severa
 - The purpose of the account creation event on LAPTOP-JU4M3I0E and whether it was a result of an attack or a legitimate administrative action.
 - The origin and intent behind the WMIGhost script execution on IEWIN7.
 ```
-Follow-up Response #1
+### Follow-up Response #1
 ```
  Based on the provided logs and analysis summary, here are some key points to address your question:
 
