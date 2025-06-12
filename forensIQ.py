@@ -1033,8 +1033,11 @@ def analyze_with_ollama_chunked(logs, timestamp_field=None, index_name=None):
         formatted = []
         for log in log_list:
             # Skip known numeric fields from timestamp processing
-            log_copy = {k:v for k,v in log.items() 
-                       if k.lower() not in ['eventid', 'event_id']}
+            log_copy = {
+                str(k): v for k, v in log.items() 
+                if k is not None and v is not None and 
+                   str(k).lower() not in ['eventid', 'event_id']
+            }
             
             # Format the remaining log
             ts = log.get(timestamp_field, 'no timestamp')
@@ -1043,7 +1046,7 @@ def analyze_with_ollama_chunked(logs, timestamp_field=None, index_name=None):
                 
             log_str = f"[{ts}] " + " ".join(
                 f"{k}={v}" for k, v in clean_log(log_copy).items() 
-                if k != timestamp_field
+                if k != timestamp_field and v is not None
             )
             formatted.append(log_str)
         return "\n".join(formatted)
@@ -1409,7 +1412,11 @@ def main():
     print("="*50)
 
     # Check if Elasticsearch is configured
-    elastic_enabled = ELASTICSEARCH_URL.lower() != 'none' and ELASTIC_USERNAME.lower() != 'none' and ELASTIC_PASSWORD.lower() != 'none'
+    elastic_enabled = all([
+        ELASTICSEARCH_URL.lower() != 'none',
+        ELASTIC_USERNAME.lower() != 'none', 
+        ELASTIC_PASSWORD.lower() != 'none'
+    ])
     
     if elastic_enabled:
         try:
@@ -1422,13 +1429,18 @@ def main():
             if health.status_code != 200:
                 print("⛔ Failed to connect to Elasticsearch")
                 elastic_enabled = False
+            else:
+                print("✅ Elasticsearch connection successful")
         except Exception as e:
             print(f"⛔ Elasticsearch connection failed: {e}")
             elastic_enabled = False
 
     while True:
         print("\nSelect data source:")
-        print("1. Elasticsearch (requires configuration)")
+        if elastic_enabled:
+            print("1. Elasticsearch")
+        elif elastic_enabled == False:
+            print("1. Elasticsearch - Could not connect - Please check your config file and try again")
         print("2. Local CSV file")
         print("0. Exit")
         
