@@ -149,6 +149,9 @@ Minimum 2GB RAM (4GB+ recommended)
 📧 dfirvault@gmail.com
 [https://www.linkedin.com/in/jacob--wilson/](https://www.linkedin.com/in/jacob--wilson/)
 
+**More information:**
+[https://dfirvault.com](https://dfirvault.com)
+
 Python 3.8+
 
 ## License
