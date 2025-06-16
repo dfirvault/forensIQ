@@ -143,6 +143,12 @@ Ollama server with at least one LLM model
 
 Minimum 2GB RAM (4GB+ recommended)
 
+## 👤 Author
+
+**Jacob Wilson**  
+📧 dfirvault@gmail.com
+[https://www.linkedin.com/in/jacob--wilson/](https://www.linkedin.com/in/jacob--wilson/)
+
 Python 3.8+
 
 ## License
